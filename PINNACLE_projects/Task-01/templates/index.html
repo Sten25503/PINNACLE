@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time Chat Application</title>
+
+    <!-- CSS for styling the page -->
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f0f8ff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-image: linear-gradient(to right, #00c6ff, #0072ff);
+      }
+
+      .chat-container {
+        background-color: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.2);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        font-size: 16px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+      }
+
+      button {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        font-size: 16px;
+        border-radius: 6px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      #chat {
+        display: none;
+      }
+
+      #messages {
+        list-style: none;
+        padding: 10px;
+        max-height: 200px;
+        overflow-y: scroll;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        margin-top: 10px;
+      }
+
+      #messages li {
+        padding: 8px;
+        background-color: #f1f1f1;
+        border-radius: 6px;
+        margin-bottom: 8px;
+      }
+
+      .message-container {
+        display: flex;
+        margin-top: 10px;
+      }
+
+      .message-container input {
+        flex: 1;
+        margin-right: 10px;
+      }
+
+      .message-container button {
+        width: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <h1>Real-Time Chat</h1>
+
+      <!-- Username and room input fields -->
+      <input type="text" id="username" placeholder="Enter Username" required />
+      <input type="text" id="room" placeholder="Enter Room Name" required />
+
+      <!-- Join/Leave Room buttons -->
+      <button id="joinBtn" onclick="joinRoom()">Join Room</button>
+      <button id="leaveBtn" onclick="leaveRoom()">Leave Room</button>
+
+      <!-- Room info -->
+      <p id="room-info" style="display: none">
+        You are in room: <span id="current-room"></span>
+      </p>
+
+      <!-- Chat messages section -->
+      <div id="chat">
+        <ul id="messages"></ul>
+        <div class="message-container">
+          <input id="message" placeholder="Type a message..." />
+          <button onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+
+      <!-- Status message -->
+      <p id="status"></p>
+    </div>
+
+    <!-- Including Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script>
+      const socket = io();
+
+      // DOM elements
+      const chatDiv = document.getElementById("chat");
+      const messagesList = document.getElementById("messages");
+      const roomInfo = document.getElementById("room-info");
+      const currentRoom = document.getElementById("current-room");
+      const statusMessage = document.getElementById("status");
+
+      // Join Room function
+      function joinRoom() {
+        const username = document.getElementById("username").value;
+        const room = document.getElementById("room").value;
+
+        if (username === "" || room === "") {
+          setStatus("Please enter both username and room name", "error");
+          return;
+        }
+
+        socket.emit("joinRoom", { username, room });
+
+        // Show the chat and room info
+        chatDiv.style.display = "block";
+        roomInfo.style.display = "block";
+        currentRoom.innerText = room;
+
+        setStatus(
+          `Welcome, ${username}. You've joined room: ${room}`,
+          "success"
+        );
+      }
+
+      // Leave Room function
+      function leaveRoom() {
+        const username = document.getElementById("username").value;
+        const room = document.getElementById("room").value;
+
+        if (username === "" || room === "") {
+          setStatus("You need to join a room first!", "error");
+          return;
+        }
+
+        socket.emit("leaveRoom", { username, room });
+
+        // Hide the chat and room info
+        chatDiv.style.display = "none";
+        roomInfo.style.display = "none";
+
+        setStatus(`${username} has left room: ${room}`, "info");
+      }
+
+      // Send Message function
+      function sendMessage() {
+        const message = document.getElementById("message").value;
+        const room = document.getElementById("room").value;
+
+        if (message.trim() === "") return;
+
+        socket.emit("chatMessage", message, room);
+        document.getElementById("message").value = "";
+      }
+
+      // Listen for messages
+      socket.on("message", (message) => {
+        const li = document.createElement("li");
+        li.innerText = message;
+        messagesList.appendChild(li);
+        messagesList.scrollTop = messagesList.scrollHeight;
+      });
+
+      // Display status messages
+      function setStatus(message, type) {
+        statusMessage.innerText = message;
+        statusMessage.style.color = type === "error" ? "red" : "green";
+      }
+    </script>
+  </body>
+</html>

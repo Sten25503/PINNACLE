@@ -1,4 +1,5 @@
 Internship Projects at PinnacleLabs
+
 This repository showcases a collection of projects completed during my internship at PinnacleLabs. These projects focus on real-time communication, weather forecasting, and calendar management, demonstrating skills in Python programming, GUI design, API integration, and more.
 
 Projects Overview
